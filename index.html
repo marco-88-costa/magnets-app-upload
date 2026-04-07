@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upload da tua foto</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7f7;
+      margin: 0;
+      padding: 40px 20px;
+      color: #222;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    p {
+      line-height: 1.6;
+    }
+
+    button {
+      background: #111;
+      color: white;
+      border: none;
+      padding: 14px 22px;
+      font-size: 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    button:hover {
+      background: #333;
+    }
+
+    #result {
+      margin-top: 25px;
+      padding: 15px;
+      background: #eef8ee;
+      border: 1px solid #b7dfb7;
+      border-radius: 10px;
+      display: none;
+    }
+
+    #preview {
+      margin-top: 20px;
+      max-width: 250px;
+      border-radius: 12px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Envia a tua fotografia</h1>
+    <p>Faz o upload da tua imagem e ajusta-a dentro da área quadrada de impressão.</p>
+    <p>Formato do produto: 5x5 cm.</p>
+
+    <button id="upload_widget">Escolher fotografia</button>
+
+    <img id="preview" alt="Pré-visualização da imagem enviada" />
+    <div id="result"></div>
+  </div>
+
+  <script src="https://widget.cloudinary.com/v2.0/global/all.js" type="text/javascript"></script>
+
+  <script>
+    const myWidget = cloudinary.createUploadWidget(
+      {
+        cloudName: 'dambyxr7a',
+        uploadPreset: 'MVP_Magnet_Upload',
+        sources: ['local', 'camera'],
+        multiple: false,
+        resourceType: 'image',
+        cropping: true,
+        croppingAspectRatio: 1,
+        showSkipCropButton: false,
+        folder: 'magnet-uploads',
+        clientAllowedFormats: ['jpg', 'jpeg', 'png', 'webp'],
+        maxFileSize: 5000000
+      },
+      (error, result) => {
+        if (!error && result && result.event === "success") {
+          const imageUrl = result.info.secure_url;
+          document.getElementById("preview").src = imageUrl;
+          document.getElementById("preview").style.display = "block";
+          document.getElementById("result").style.display = "block";
+          document.getElementById("result").innerHTML =
+            "Upload concluído com sucesso. Recebemos a tua imagem.";
+        }
+      }
+    );
+
+    document.getElementById("upload_widget").addEventListener("click", function () {
+      myWidget.open();
+    }, false);
+  </script>
+</body>
+</html>
