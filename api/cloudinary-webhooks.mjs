@@ -1,10 +1,6 @@
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
+export async function POST(request) {
   try {
-    const payload = req.body;
+    const payload = await request.json();
 
     const imageUrl = payload.secure_url || 'URL não disponível';
     const originalFilename = payload.original_filename || 'Sem nome';
@@ -54,11 +50,27 @@ export default async function handler(req, res) {
     const result = await brevoResponse.json();
 
     if (!brevoResponse.ok) {
-      return res.status(500).json({ error: result });
+      return new Response(JSON.stringify({ error: result }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
-    return res.status(200).json({ success: true, brevo: result });
+    return new Response(JSON.stringify({ success: true, brevo: result }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
+}
+
+export function GET() {
+  return new Response(JSON.stringify({ message: 'Endpoint ativo. Usa POST.' }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' }
+  });
 }
