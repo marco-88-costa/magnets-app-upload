@@ -183,7 +183,7 @@
     </div>
 
     <div class="button-row">
-      <button id="upload_widget">Escolher fotografia</button>
+      <button id="upload_widget" type="button">Escolher fotografia</button>
       <button id="add_more_btn" type="button">Adicionar outra fotografia</button>
     </div>
 
@@ -228,12 +228,12 @@
 
     function showError(message) {
       errorMessage.style.display = "block";
-      errorMessage.innerHTML = message;
+      errorMessage.textContent = message;
     }
 
     function clearError() {
       errorMessage.style.display = "none";
-      errorMessage.innerHTML = "";
+      errorMessage.textContent = "";
     }
 
     function validateCustomerData() {
@@ -267,14 +267,12 @@
         addMoreBtn.style.display = "inline-block";
       }
 
+      uploadBtn.disabled = reachedLimit;
+      addMoreBtn.disabled = reachedLimit;
+
       if (reachedLimit) {
-        addMoreBtn.disabled = true;
-        uploadBtn.disabled = true;
         resultBox.style.display = "block";
-        resultBox.innerHTML = Atingiste o número máximo de ${MAX_IMAGES} fotografias para este pedido.;
-      } else {
-        addMoreBtn.disabled = false;
-        uploadBtn.disabled = false;
+        resultBox.textContent = Atingiste o número máximo de ${MAX_IMAGES} fotografias para este pedido.;
       }
     }
 
@@ -317,24 +315,19 @@
         folder: 'magnet-uploads',
         clientAllowedFormats: ['jpg', 'jpeg', 'png', 'webp'],
         maxFileSize: 10000000,
-        prepareUploadParams: (cb, params) => {
+        prepareUploadParams: (cb) => {
           cb({
-            context: {
-              order_id: orderId,
-              customer_name: customerNameInput.value.trim(),
-              customer_email: customerEmailInput.value.trim()
-            },
             tags: ['magnet-upload', orderId]
           });
         }
       },
       (error, result) => {
-        if (!error && result && result.event === "success") {
-          if (uploadedImages.length >= MAX_IMAGES) {
-            updateButtonsState();
-            return;
-          }
+        if (error) {
+          showError("Ocorreu um erro ao abrir ou processar o upload.");
+          return;
+        }
 
+        if (result && result.event === "success") {
           const imageUrl = result.info.secure_url;
 
           uploadedImages.push({
@@ -349,9 +342,9 @@
           resultBox.style.display = "block";
 
           if (uploadedImages.length >= MAX_IMAGES) {
-            resultBox.innerHTML = Upload concluído com sucesso. Atingiste o máximo de ${MAX_IMAGES} fotografias neste pedido.;
+            resultBox.textContent = Upload concluído com sucesso. Atingiste o máximo de ${MAX_IMAGES} fotografias neste pedido.;
           } else {
-            resultBox.innerHTML = "Upload concluído com sucesso. Podes adicionar outra fotografia ao mesmo pedido.";
+            resultBox.textContent = "Upload concluído com sucesso. Podes adicionar outra fotografia ao mesmo pedido.";
           }
 
           renderUploads();
@@ -371,7 +364,7 @@
       orderInfo.innerHTML = Número da encomenda: <strong>${orderId}</strong>;
 
       myWidget.open();
-    }, false);
+    });
 
     addMoreBtn.addEventListener("click", function () {
       if (!validateCustomerData()) return;
