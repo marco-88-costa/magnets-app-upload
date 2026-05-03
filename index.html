@@ -63,13 +63,12 @@
       display: none;
     }
 
-    #orderInfo {
-      margin-top: 16px;
-      padding: 12px 15px;
-      background: #f3f3f3;
+    #orderBox {
+      margin-top: 20px;
+      padding: 12px;
+      background: #f5f5f5;
       border: 1px solid #ddd;
       border-radius: 10px;
-      display: none;
       font-size: 14px;
     }
 
@@ -88,9 +87,10 @@
     <p>Faz o upload da tua imagem e ajusta-a dentro da área quadrada de impressão.</p>
     <p>Tamanho: 5x5 cm.<br>Formatos suportados: .jpeg, .jpg, .png</p>
 
+    <div id="orderBox"></div>
+
     <button id="upload_widget">Escolher</button>
 
-    <div id="orderInfo"></div>
     <img id="preview" alt="Pré-visualização da imagem enviada" />
     <div id="result"></div>
   </div>
@@ -98,8 +98,6 @@
   <script src="https://widget.cloudinary.com/v2.0/global/all.js" type="text/javascript"></script>
 
   <script>
-    let orderId = "";
-
     function generateOrderId() {
       const now = new Date();
       const yyyy = now.getFullYear();
@@ -108,6 +106,10 @@
       const random = Math.floor(10000 + Math.random() * 90000);
       return MAG-${yyyy}${mm}${dd}-${random};
     }
+
+    const orderId = generateOrderId();
+    document.getElementById("orderBox").innerHTML =
+      "<strong>Número da encomenda:</strong> " + orderId;
 
     const myWidget = cloudinary.createUploadWidget(
       {
@@ -126,26 +128,18 @@
       (error, result) => {
         if (!error && result && result.event === "success") {
           const imageUrl = result.info.secure_url;
-
           document.getElementById("preview").src = imageUrl;
           document.getElementById("preview").style.display = "block";
-
           document.getElementById("result").style.display = "block";
           document.getElementById("result").innerHTML =
-            "Upload concluído com sucesso. Recebemos a tua imagem!<br><strong>Pedido:</strong> " + orderId;
+            "Upload concluído com sucesso.<br>" +
+            "Recebemos a tua imagem.<br>" +
+            "<strong>Pedido:</strong> " + orderId;
         }
       }
     );
 
     document.getElementById("upload_widget").addEventListener("click", function () {
-      if (!orderId) {
-        orderId = generateOrderId();
-      }
-
-      document.getElementById("orderInfo").style.display = "block";
-      document.getElementById("orderInfo").innerHTML =
-        "<strong>Número da encomenda:</strong> " + orderId;
-
       myWidget.open();
     }, false);
   </script>
