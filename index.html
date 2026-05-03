@@ -25,47 +25,18 @@
 
     .logo {
       display: block;
-      width: 110px;
+      width: 80px;
       max-width: 100%;
       height: auto;
       margin: 0 auto 18px auto;
     }
 
-    h2, h3 {
+    h1, h2 {
       margin-bottom: 10px;
     }
 
     p {
       line-height: 1.6;
-    }
-
-    .form-group {
-      text-align: left;
-      margin: 16px auto;
-      max-width: 420px;
-    }
-
-    .form-group label {
-      display: block;
-      margin-bottom: 6px;
-      font-weight: bold;
-    }
-
-    .form-group input {
-      width: 100%;
-      padding: 12px 14px;
-      font-size: 16px;
-      border: 1px solid #ccc;
-      border-radius: 10px;
-      box-sizing: border-box;
-    }
-
-    .button-row {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      flex-wrap: wrap;
-      margin-top: 20px;
     }
 
     button {
@@ -76,26 +47,11 @@
       font-size: 16px;
       border-radius: 10px;
       cursor: pointer;
+      margin-top: 20px;
     }
 
     button:hover {
       background: #333;
-    }
-
-    button:disabled {
-      background: #bdbdbd;
-      cursor: not-allowed;
-    }
-
-    #add_more_btn {
-      display: none;
-      background: #f0f0f0;
-      color: #111;
-      border: 1px solid #ccc;
-    }
-
-    #add_more_btn:hover {
-      background: #e5e5e5;
     }
 
     #result {
@@ -107,57 +63,11 @@
       display: none;
     }
 
-    #errorMessage {
-      margin-top: 16px;
-      padding: 12px;
-      background: #fff2f2;
-      border: 1px solid #e3b3b3;
-      border-radius: 10px;
-      color: #a33;
+    #preview {
+      margin-top: 20px;
+      max-width: 250px;
+      border-radius: 12px;
       display: none;
-      max-width: 420px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    #orderInfo {
-      margin-top: 14px;
-      font-size: 14px;
-      color: #555;
-      display: none;
-    }
-
-    #uploadsSection {
-      display: none;
-      margin-top: 28px;
-      text-align: left;
-    }
-
-    #uploadsSection h3 {
-      text-align: center;
-      margin-bottom: 14px;
-    }
-
-    #uploadsList {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-
-    #uploadsList li {
-      background: #fafafa;
-      border: 1px solid #e2e2e2;
-      border-radius: 10px;
-      padding: 12px;
-      margin-bottom: 10px;
-      word-break: break-word;
-    }
-
-    .upload-count {
-      font-size: 14px;
-      color: #666;
-      margin-top: 8px;
-      text-align: center;
     }
   </style>
 </head>
@@ -165,204 +75,47 @@
   <div class="container">
     <img src="images/logo.jpeg" alt="Logo da marca" class="logo" />
     <h2>Envia a tua fotografia</h2>
-    <p>Preenche os teus dados e faz o upload da imagem.</p>
+    <p>Faz o upload da tua imagem e ajusta-a dentro da área quadrada de impressão.</p>
     <p>Tamanho: 5x5 cm.<br>Formatos suportados: .jpeg, .jpg, .png</p>
+    <button id="upload_widget">Escolher</button>
 
-    <div class="form-group">
-      <label for="customerName">Nome</label>
-      <input type="text" id="customerName" placeholder="O teu nome" required />
-    </div>
-
-    <div class="form-group">
-      <label for="customerEmail">Email</label>
-      <input type="email" id="customerEmail" placeholder="teuemail@exemplo.com" required />
-    </div>
-
-    <div class="button-row">
-      <button id="upload_widget" type="button">Escolher fotografia</button>
-      <button id="add_more_btn" type="button">Adicionar outra fotografia</button>
-    </div>
-
-    <div id="errorMessage"></div>
-    <div id="orderInfo"></div>
+    <img id="preview" alt="Pré-visualização da imagem enviada" />
     <div id="result"></div>
-
-    <div id="uploadsSection">
-      <h3>Fotografias adicionadas</h3>
-      <ul id="uploadsList"></ul>
-      <div class="upload-count" id="uploadCount"></div>
-    </div>
   </div>
 
   <script src="https://widget.cloudinary.com/v2.0/global/all.js" type="text/javascript"></script>
 
   <script>
-    const MAX_IMAGES = 6;
-
-    const customerNameInput = document.getElementById("customerName");
-    const customerEmailInput = document.getElementById("customerEmail");
-    const errorMessage = document.getElementById("errorMessage");
-    const resultBox = document.getElementById("result");
-    const orderInfo = document.getElementById("orderInfo");
-    const uploadsSection = document.getElementById("uploadsSection");
-    const uploadsList = document.getElementById("uploadsList");
-    const uploadCount = document.getElementById("uploadCount");
-    const addMoreBtn = document.getElementById("add_more_btn");
-    const uploadBtn = document.getElementById("upload_widget");
-
-    let orderId = "";
-    let uploadedImages = [];
-
-    function generateOrderId() {
-      const now = new Date();
-      const yyyy = now.getFullYear();
-      const mm = String(now.getMonth() + 1).padStart(2, "0");
-      const dd = String(now.getDate()).padStart(2, "0");
-      const random = Math.floor(10000 + Math.random() * 90000);
-      return MAG-${yyyy}${mm}${dd}-${random};
-    }
-
-    function showError(message) {
-      errorMessage.style.display = "block";
-      errorMessage.textContent = message;
-    }
-
-    function clearError() {
-      errorMessage.style.display = "none";
-      errorMessage.textContent = "";
-    }
-
-    function validateCustomerData() {
-      const customerName = customerNameInput.value.trim();
-      const customerEmail = customerEmailInput.value.trim();
-
-      clearError();
-
-      if (!customerName) {
-        showError("Por favor, preenche o teu nome.");
-        return false;
-      }
-
-      if (!customerEmail) {
-        showError("Por favor, preenche o teu email.");
-        return false;
-      }
-
-      if (!customerEmailInput.checkValidity()) {
-        showError("Por favor, introduz um email válido.");
-        return false;
-      }
-
-      return true;
-    }
-
-    function canUploadMore() {
-      if (uploadedImages.length >= MAX_IMAGES) {
-        showError(Só podes adicionar até ${MAX_IMAGES} fotografias neste pedido.);
-        return false;
-      }
-      return true;
-    }
-
-    function updateButtonsState() {
-      const reachedLimit = uploadedImages.length >= MAX_IMAGES;
-
-      if (uploadedImages.length > 0) {
-        addMoreBtn.style.display = "inline-block";
-      }
-
-      uploadBtn.disabled = reachedLimit;
-      addMoreBtn.disabled = reachedLimit;
-
-      if (reachedLimit) {
-        resultBox.style.display = "block";
-        resultBox.textContent = Atingiste o número máximo de ${MAX_IMAGES} fotografias para este pedido.;
-      }
-    }
-
-    function renderUploads() {
-      uploadsSection.style.display = "block";
-      uploadsList.innerHTML = "";
-
-      uploadedImages.forEach((image, index) => {
-        const li = document.createElement("li");
-        li.innerHTML = `
-          <strong>Fotografia ${index + 1}</strong><br>
-          URL: ${image.url}
-        `;
-        uploadsList.appendChild(li);
-      });
-
-      uploadCount.textContent = ${uploadedImages.length} de ${MAX_IMAGES} fotografia(s) adicionada(s) a este pedido.;
-      updateButtonsState();
-    }
-
-    function openWidget() {
-      cloudinary.openUploadWidget(
-        {
-          cloudName: "dambyxr7a",
-          uploadPreset: "MVP_Magnet_Upload",
-          sources: ["local", "camera"],
-          multiple: false,
-          resourceType: "image",
-          cropping: true,
-          croppingAspectRatio: 1,
-          showSkipCropButton: false,
-          folder: "magnet-uploads",
-          clientAllowedFormats: ["jpg", "jpeg", "png", "webp"],
-          maxFileSize: 10000000
-        },
-        function(error, result) {
-          if (error) {
-            showError("Ocorreu um erro no upload.");
-            return;
-          }
-
-          if (result && result.event === "success") {
-            uploadedImages.push({
-              url: result.info.secure_url,
-              publicId: result.info.public_id
-            });
-
-            orderInfo.style.display = "block";
-            orderInfo.innerHTML = Número da encomenda: <strong>${orderId}</strong>;
-
-            resultBox.style.display = "block";
-
-            if (uploadedImages.length >= MAX_IMAGES) {
-              resultBox.textContent = Upload concluído com sucesso. Atingiste o máximo de ${MAX_IMAGES} fotografias neste pedido.;
-            } else {
-              resultBox.textContent = "Upload concluído com sucesso. Podes adicionar outra fotografia ao mesmo pedido.";
-            }
-
-            clearError();
-            renderUploads();
-          }
+    const myWidget = cloudinary.createUploadWidget(
+      {
+        cloudName: 'dambyxr7a',
+        uploadPreset: 'MVP_Magnet_Upload',
+        sources: ['local', 'camera'],
+        multiple: false,
+        resourceType: 'image',
+        cropping: true,
+        croppingAspectRatio: 1,
+        showSkipCropButton: false,
+        folder: 'magnet-uploads',
+        clientAllowedFormats: ['jpg', 'jpeg', 'png', 'webp'],
+        maxFileSize: 10000000
+      },
+      (error, result) => {
+        if (!error && result && result.event === "success") {
+          const imageUrl = result.info.secure_url;
+          document.getElementById("preview").src = imageUrl;
+          document.getElementById("preview").style.display = "block";
+          document.getElementById("result").style.display = "block";
+          document.getElementById("result").innerHTML =
+            "Upload concluído com sucesso. Recebemos a tua imagem!";
         }
-      );
-    }
-
-    uploadBtn.addEventListener("click", function () {
-      if (!validateCustomerData()) return;
-      if (!canUploadMore()) return;
-
-      if (!orderId) {
-        orderId = generateOrderId();
       }
+    );
 
-      orderInfo.style.display = "block";
-      orderInfo.innerHTML = Número da encomenda: <strong>${orderId}</strong>;
-
-      openWidget();
-    });
-
-    addMoreBtn.addEventListener("click", function () {
-      if (!validateCustomerData()) return;
-      if (!orderId) return;
-      if (!canUploadMore()) return;
-
-      openWidget();
-    });
+    document.getElementById("upload_widget").addEventListener("click", function () {
+      myWidget.open();
+    }, false);
   </script>
 </body>
 </html>
+
