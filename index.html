@@ -77,6 +77,16 @@
       background: #e5e5e5;
     }
 
+    #finish_order_btn {
+      display: none;
+      background: #0f6b3f;
+      color: white;
+    }
+
+    #finish_order_btn:hover {
+      background: #0b5431;
+    }
+
     #result {
       margin-top: 25px;
       padding: 15px;
@@ -153,6 +163,7 @@
     <div class="button-row">
       <button id="upload_widget">Escolher</button>
       <button id="add_more_btn" type="button">Adicionar outra fotografia</button>
+      <button id="finish_order_btn" type="button">Concluir pedido</button>
     </div>
 
     <div id="orderInfo"></div>
@@ -175,7 +186,7 @@
 
     let orderId = "";
     let uploadedImages = [];
-    let notificationSent = false;
+    let orderSubmitted = false;
 
     function generateOrderId() {
       const now = new Date();
@@ -187,17 +198,24 @@
     }
 
     function updateButtons() {
-      const reachedLimit = uploadedImages.length >= MAX_IMAGES;
       const addMoreBtn = document.getElementById("add_more_btn");
       const uploadBtn = document.getElementById("upload_widget");
+      const finishOrderBtn = document.getElementById("finish_order_btn");
+
+      const reachedLimit = uploadedImages.length >= MAX_IMAGES;
 
       if (uploadedImages.length > 0) {
         addMoreBtn.style.display = "inline-block";
+        finishOrderBtn.style.display = "inline-block";
       }
 
-      if (reachedLimit) {
-        uploadBtn.disabled = true;
+      if (reachedLimit || orderSubmitted) {
         addMoreBtn.disabled = true;
+        uploadBtn.disabled = true;
+      }
+
+      if (orderSubmitted) {
+        finishOrderBtn.disabled = true;
       }
     }
 
@@ -217,41 +235,10 @@
         uploadsList.appendChild(li);
       });
 
-      uploadCount.textContent = uploadedImages.length + " de " + MAX_IMAGES + " fotografia(s) adicionada(s) a este pedido.";
+      uploadCount.textContent =
+        uploadedImages.length + " de " + MAX_IMAGES + " fotografia(s) adicionada(s) a este pedido.";
+
       updateButtons();
-    }
-
-    function sendOrderNotification() {
-      if (notificationSent) return;
-
-      const emailStatus = document.getElementById("emailStatus");
-      emailStatus.style.display = "block";
-      emailStatus.textContent = "A enviar notificação do pedido...";
-
-      fetch(MAKE_WEBHOOK_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          orderId: orderId,
-          totalImages: uploadedImages.length,
-          firstImageUrl: uploadedImages[0] ? uploadedImages[0].url : "",
-          uploadedAt: new Date().toISOString()
-        })
-      })
-      .then(function(response) {
-        if (!response.ok) {
-          throw new Error("Falha ao enviar notificação.");
-        }
-
-        notificationSent = true;
-        emailStatus.textContent = "Notificação do pedido enviada com sucesso.";
-      })
-      .catch(function(error) {
-        console.error(error);
-        emailStatus.textContent = "O upload foi concluído, mas a notificação do pedido não foi enviada.";
-      });
     }
 
     const myWidget = cloudinary.createUploadWidget(
@@ -289,31 +276,63 @@
             "<strong>Número da encomenda:</strong> " + orderId;
 
           document.getElementById("result").style.display = "block";
-
-          if (uploadedImages.length >= MAX_IMAGES) {
-            document.getElementById("result").innerHTML =
-              "Upload concluído com sucesso.<br><strong>Pedido:</strong> " + orderId +
-              "<br>Atingiste o limite máximo de " + MAX_IMAGES + " fotografias.";
-          } else {
-            document.getElementById("result").innerHTML =
-              "Upload concluído com sucesso.<br><strong>Pedido:</strong> " + orderId;
-          }
+          document.getElementById("result").innerHTML =
+            "Upload concluído com sucesso.<br><strong>Pedido:</strong> " + orderId;
 
           renderUploads();
-          sendOrderNotification();
         }
       }
     );
 
     document.getElementById("upload_widget").addEventListener("click", function () {
-      if (uploadedImages.length >= MAX_IMAGES) return;
+      if (uploadedImages.length >= MAX_IMAGES || orderSubmitted) return;
       myWidget.open();
     }, false);
 
     document.getElementById("add_more_btn").addEventListener("click", function () {
-      if (uploadedImages.length >= MAX_IMAGES) return;
+      if (uploadedImages.length >= MAX_IMAGES || orderSubmitted) return;
       myWidget.open();
     }, false);
+
+    document.getElementById("finish_order_btn").addEventListener("click", function () {
+      if (uploadedImages.length === 0) return;
+      if (orderSubmitted) return;
+
+      const emailStatus = document.getElementById("emailStatus");
+      emailStatus.style.display = "block";
+      emailStatus.textContent = "A enviar pedido...";
+
+      fetch(MAKE_WEBHOOK_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          orderId: orderId,
+          totalImages: uploadedImages.length,
+          images: uploadedImages,
+          submittedAt: new Date().toISOString()
+        })
+      })
+      .then(function(response) {
+        if (!response.ok) {
+          throw new Error("Falha ao enviar o pedido.");
+        }
+
+        orderSubmitted = true;
+
+        document.getElementById("result").style.display = "block";
+        document.getElementById("result").innerHTML =
+          "Pedido concluído com sucesso.<br><strong>Pedido:</strong> " + orderId;
+
+        emailStatus.textContent = "Pedido enviado com sucesso.";
+        updateButtons();
+      })
+      .catch(function(error) {
+        console.error(error);
+        emailStatus.textContent = "As imagens foram carregadas, mas o pedido não foi enviado. Tenta novamente.";
+      });
+    });
   </script>
 </body>
 </html>
