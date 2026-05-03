@@ -134,6 +134,13 @@
       color: #666;
       text-align: center;
     }
+
+    #emailStatus {
+      margin-top: 12px;
+      font-size: 14px;
+      color: #666;
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -151,6 +158,7 @@
     <div id="orderInfo"></div>
     <img id="preview" alt="Pré-visualização da imagem enviada" />
     <div id="result"></div>
+    <div id="emailStatus"></div>
 
     <div id="uploadsSection">
       <h3>Fotografias adicionadas</h3>
@@ -163,8 +171,11 @@
 
   <script>
     const MAX_IMAGES = 6;
+    const MAKE_WEBHOOK_URL = "https://hook.eu1.make.com/mjs1p31y6w91dskkkakcgffji365aec7";
+
     let orderId = "";
     let uploadedImages = [];
+    let notificationSent = false;
 
     function generateOrderId() {
       const now = new Date();
@@ -208,6 +219,39 @@
 
       uploadCount.textContent = uploadedImages.length + " de " + MAX_IMAGES + " fotografia(s) adicionada(s) a este pedido.";
       updateButtons();
+    }
+
+    function sendOrderNotification() {
+      if (notificationSent) return;
+
+      const emailStatus = document.getElementById("emailStatus");
+      emailStatus.style.display = "block";
+      emailStatus.textContent = "A enviar notificação do pedido...";
+
+      fetch(MAKE_WEBHOOK_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          orderId: orderId,
+          totalImages: uploadedImages.length,
+          firstImageUrl: uploadedImages[0] ? uploadedImages[0].url : "",
+          uploadedAt: new Date().toISOString()
+        })
+      })
+      .then(function(response) {
+        if (!response.ok) {
+          throw new Error("Falha ao enviar notificação.");
+        }
+
+        notificationSent = true;
+        emailStatus.textContent = "Notificação do pedido enviada com sucesso.";
+      })
+      .catch(function(error) {
+        console.error(error);
+        emailStatus.textContent = "O upload foi concluído, mas a notificação do pedido não foi enviada.";
+      });
     }
 
     const myWidget = cloudinary.createUploadWidget(
@@ -256,6 +300,7 @@
           }
 
           renderUploads();
+          sendOrderNotification();
         }
       }
     );
@@ -272,4 +317,3 @@
   </script>
 </body>
 </html>
-
