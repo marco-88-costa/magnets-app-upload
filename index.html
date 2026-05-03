@@ -63,20 +63,21 @@
       display: none;
     }
 
-    #orderBox {
-      margin-top: 20px;
-      padding: 12px;
-      background: #f5f5f5;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      font-size: 14px;
-    }
-
     #preview {
       margin-top: 20px;
       max-width: 250px;
       border-radius: 12px;
       display: none;
+    }
+
+    #orderInfo {
+      margin-top: 15px;
+      padding: 12px;
+      background: #f5f5f5;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      display: none;
+      font-size: 14px;
     }
   </style>
 </head>
@@ -86,11 +87,9 @@
     <h2>Envia a tua fotografia</h2>
     <p>Faz o upload da tua imagem e ajusta-a dentro da área quadrada de impressão.</p>
     <p>Tamanho: 5x5 cm.<br>Formatos suportados: .jpeg, .jpg, .png</p>
-
-    <div id="orderBox"></div>
-
     <button id="upload_widget">Escolher</button>
 
+    <div id="orderInfo"></div>
     <img id="preview" alt="Pré-visualização da imagem enviada" />
     <div id="result"></div>
   </div>
@@ -104,12 +103,8 @@
       const mm = String(now.getMonth() + 1).padStart(2, "0");
       const dd = String(now.getDate()).padStart(2, "0");
       const random = Math.floor(10000 + Math.random() * 90000);
-      return MAG-${yyyy}${mm}${dd}-${random};
+      return "MAG-" + yyyy + mm + dd + "-" + random;
     }
-
-    const orderId = generateOrderId();
-    document.getElementById("orderBox").innerHTML =
-      "<strong>Número da encomenda:</strong> " + orderId;
 
     const myWidget = cloudinary.createUploadWidget(
       {
@@ -128,13 +123,18 @@
       (error, result) => {
         if (!error && result && result.event === "success") {
           const imageUrl = result.info.secure_url;
+          const orderId = generateOrderId();
+
           document.getElementById("preview").src = imageUrl;
           document.getElementById("preview").style.display = "block";
+
+          document.getElementById("orderInfo").style.display = "block";
+          document.getElementById("orderInfo").innerHTML =
+            "<strong>Número da encomenda:</strong> " + orderId;
+
           document.getElementById("result").style.display = "block";
           document.getElementById("result").innerHTML =
-            "Upload concluído com sucesso.<br>" +
-            "Recebemos a tua imagem.<br>" +
-            "<strong>Pedido:</strong> " + orderId;
+            "Upload concluído com sucesso. Recebemos a tua imagem!<br><strong>Pedido:</strong> " + orderId;
         }
       }
     );
